@@ -5,9 +5,18 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import Expenses from './pages/expenses/Expenses';
+import Upload from './pages/upload/Upload';
+import Review from './pages/review/Review';
 
-// Create a client
-const queryClient = new QueryClient();
+// Create a client with reasonable defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
@@ -23,8 +32,9 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/expenses" element={<Expenses />} />
             
-            {/* Future routes */}
-            <Route path="/upload" element={<div className="p-8">Upload Placeholder (Phase 2)</div>} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/review" element={<Review />} />
+            
             <Route path="/reports" element={<div className="p-8">Reports Placeholder (Phase 4+)</div>} />
           </Route>
           

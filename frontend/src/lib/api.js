@@ -28,9 +28,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Auto logout if unauthorized
+      // Auto logout if unauthorized (Zustand state change will trigger React Router to redirect)
       useAuthStore.getState().logout();
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

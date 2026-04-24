@@ -45,6 +45,13 @@ public class Expense {
     @Column(nullable = false)
     private LocalDate date;
 
+    // Phase 3: Receipt linkage
+    @Column(length = 512)
+    private String receiptUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String rawOcrData;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

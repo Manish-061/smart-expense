@@ -21,5 +21,6 @@ public class ExpenseResponse {
     private String description;
     private Category category;
     private LocalDate date;
+    private String receiptUrl;
     private LocalDateTime createdAt;
 }

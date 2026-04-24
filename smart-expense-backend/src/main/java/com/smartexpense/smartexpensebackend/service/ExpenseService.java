@@ -1,6 +1,7 @@
 package com.smartexpense.smartexpensebackend.service;
 
 import com.smartexpense.smartexpensebackend.dto.request.ExpenseRequest;
+import com.smartexpense.smartexpensebackend.dto.request.ReceiptExpenseRequest;
 import com.smartexpense.smartexpensebackend.dto.response.ExpenseResponse;
 import com.smartexpense.smartexpensebackend.dto.response.ExpenseSummaryResponse;
 import com.smartexpense.smartexpensebackend.model.Category;
@@ -32,6 +33,25 @@ public class ExpenseService {
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .date(request.getDate())
+                .user(user)
+                .build();
+
+        Expense saved = expenseRepository.save(expense);
+        return mapToResponse(saved);
+    }
+
+    /**
+     * Create an expense from user-reviewed OCR data (Phase 3).
+     * Links the receipt URL and stores raw OCR text.
+     */
+    public ExpenseResponse createExpenseFromReceipt(ReceiptExpenseRequest request, User user) {
+        Expense expense = Expense.builder()
+                .amount(request.getAmount())
+                .description(request.getDescription())
+                .category(request.getCategory())
+                .date(request.getDate())
+                .receiptUrl(request.getReceiptUrl())
+                .rawOcrData(request.getRawOcrData())
                 .user(user)
                 .build();
 
@@ -114,6 +134,7 @@ public class ExpenseService {
                 .description(expense.getDescription())
                 .category(expense.getCategory())
                 .date(expense.getDate())
+                .receiptUrl(expense.getReceiptUrl())
                 .createdAt(expense.getCreatedAt())
                 .build();
     }
