@@ -1,15 +1,11 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { X } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-
-const CATEGORIES = [
-  "FOOD", "TRANSPORT", "SHOPPING", "ENTERTAINMENT", 
-  "HEALTH", "EDUCATION", "BILLS", "RENT", "TRAVEL", "OTHER"
-];
+import { CategorySelect } from "../ui/CategorySelect";
+import { CATEGORIES } from "../../lib/categories";
 
 const expenseSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
@@ -64,18 +60,10 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading }) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Category
           </label>
-          <select
-            className={`flex h-12 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${errors.category ? 'border-error focus:ring-error' : ''}`}
+          <CategorySelect
             {...register("category")}
-          >
-            <option value="">Select a category</option>
-            {CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          {errors.category && (
-            <p className="mt-1 text-sm text-error">{errors.category.message}</p>
-          )}
+            error={errors.category?.message}
+          />
         </div>
 
         <div>

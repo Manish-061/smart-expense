@@ -41,4 +41,7 @@ public class ReceiptExpenseRequest {
 
     // Raw OCR text (stored for audit/debugging)
     private String rawOcrData;
+
+    // Phase 4: The category that was suggested by the rule engine (for override tracking)
+    private Category suggestedCategory;
 }

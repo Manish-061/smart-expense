@@ -1,7 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -15,11 +16,10 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setAuth, isAuthenticated } = useAuthStore((state) => ({
-    setAuth: state.setAuth,
-    isAuthenticated: state.isAuthenticated
-  }));
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   // Protective redirect: if user hits login page via back button but is already authed
   useEffect(() => {
@@ -37,6 +37,8 @@ export default function Login() {
       setError("");
       const response = await api.post("/auth/login", data);
       
+      queryClient.clear();
+
       // Store user info and token
       setAuth({ 
         fullName: response.data.fullName, 

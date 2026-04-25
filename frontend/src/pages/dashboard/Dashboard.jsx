@@ -1,29 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import api from "../../lib/api";
-import { ArrowUpRight, ArrowDownRight, Wallet, Receipt, CreditCard } from "lucide-react";
+import useAuthStore from "../../store/useAuthStore";
+import { Wallet, Receipt, CreditCard } from "lucide-react";
+import { CategoryBadge } from "../../components/ui/CategoryBadge";
+import { getCategoryConfig } from "../../lib/categories";
 
 export default function Dashboard() {
   const today = new Date();
+  const userEmail = useAuthStore((state) => state.user?.email);
   
   // Fetch monthly summary
   const { data: summary, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ['expenses', 'summary', today.getFullYear(), today.getMonth() + 1],
+    queryKey: ['expenses', userEmail, 'summary', today.getFullYear(), today.getMonth() + 1],
     queryFn: async () => {
       const response = await api.get('/expenses/summary', {
         params: { year: today.getFullYear(), month: today.getMonth() + 1 }
       });
       return response.data;
-    }
+    },
+    enabled: Boolean(userEmail),
   });
 
   // Fetch recent expenses
   const { data: recentExpenses, isLoading: isLoadingRecent } = useQuery({
-    queryKey: ['expenses', 'recent'],
+    queryKey: ['expenses', userEmail, 'recent'],
     queryFn: async () => {
       const response = await api.get('/expenses');
       return response.data.slice(0, 5); // Just take top 5 for dashboard
-    }
+    },
+    enabled: Boolean(userEmail),
   });
 
   return (
@@ -94,26 +100,30 @@ export default function Dashboard() {
               <div className="p-8 text-center text-gray-500">No expenses recorded yet.</div>
             ) : (
               <ul className="divide-y divide-gray-100">
-                {recentExpenses.map((expense) => (
-                  <li key={expense.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium">
-                        {expense.category.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{expense.description}</p>
-                        <div className="flex gap-2 text-sm text-gray-500">
-                          <span>{format(new Date(expense.date), "MMM d, yyyy")}</span>
-                          <span>•</span>
-                          <span>{expense.category}</span>
+                {recentExpenses?.map((expense) => {
+                  const catConfig = getCategoryConfig(expense.category);
+                  const CatIcon = catConfig.icon;
+                  return (
+                    <li key={expense.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full ${catConfig.bg} flex items-center justify-center ${catConfig.color}`}>
+                          <CatIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{expense.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-500">{format(new Date(expense.date), "MMM d, yyyy")}</span>
+                            <span className="text-gray-300">•</span>
+                            <CategoryBadge category={expense.category} size="sm" showIcon={false} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="font-bold text-gray-900">
-                      ${expense.amount.toFixed(2)}
-                    </div>
-                  </li>
-                ))}
+                      <div className="font-bold text-gray-900">
+                        ${expense.amount.toFixed(2)}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -127,7 +137,7 @@ export default function Dashboard() {
           <div className="p-6">
             {isLoadingSummary ? (
               <div className="text-center text-gray-500">Loading...</div>
-            ) : !summary || Object.keys(summary.categoryBreakdown).length === 0 ? (
+            ) : !summary || Object.keys(summary.categoryBreakdown || {}).length === 0 ? (
               <div className="text-center text-gray-500 py-4">No data this month.</div>
             ) : (
               <div className="space-y-4">
@@ -135,15 +145,19 @@ export default function Dashboard() {
                   .slice(0, 5) // Show top 5
                   .map(([category, amount]) => {
                     const percentage = (amount / summary.totalSpend) * 100;
+                    const catConfig = getCategoryConfig(category);
                     return (
                       <div key={category}>
-                        <div className="flex justify-between items-center mb-1 text-sm">
-                          <span className="font-medium text-gray-700 capitalize">{category.toLowerCase()}</span>
-                          <span className="font-bold text-gray-900">${amount.toFixed(2)}</span>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${catConfig.dot}`}></div>
+                            <span className="text-sm font-medium text-gray-700">{catConfig.label}</span>
+                          </div>
+                          <span className="text-sm font-bold text-gray-900">${amount.toFixed(2)}</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
                           <div 
-                            className="bg-primary h-2 rounded-full" 
+                            className={`h-2 rounded-full transition-all duration-500 ${catConfig.dot}`}
                             style={{ width: `${Math.max(percentage, 2)}%` }}
                           ></div>
                         </div>

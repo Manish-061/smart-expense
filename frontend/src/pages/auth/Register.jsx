@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -21,6 +22,7 @@ export default function Register() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(registerSchema),
@@ -31,6 +33,8 @@ export default function Register() {
       setError("");
       const response = await api.post("/auth/register", data);
       
+      queryClient.clear();
+
       setAuth({ 
         fullName: response.data.fullName, 
         email: response.data.email 

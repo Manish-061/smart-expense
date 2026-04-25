@@ -52,6 +52,13 @@ public class Expense {
     @Column(columnDefinition = "TEXT")
     private String rawOcrData;
 
+    // Phase 4: Categorization tracking
+    @Enumerated(EnumType.STRING)
+    private Category suggestedCategory;
+
+    @Builder.Default
+    private boolean userOverrodeCategory = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

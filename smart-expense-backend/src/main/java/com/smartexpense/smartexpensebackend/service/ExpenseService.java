@@ -43,8 +43,13 @@ public class ExpenseService {
     /**
      * Create an expense from user-reviewed OCR data (Phase 3).
      * Links the receipt URL and stores raw OCR text.
+     * Phase 4: Tracks whether the user overrode the suggested category.
      */
     public ExpenseResponse createExpenseFromReceipt(ReceiptExpenseRequest request, User user) {
+        // Phase 4: Detect if user overrode the AI-suggested category
+        boolean overrode = request.getSuggestedCategory() != null
+                && request.getCategory() != request.getSuggestedCategory();
+
         Expense expense = Expense.builder()
                 .amount(request.getAmount())
                 .description(request.getDescription())
@@ -52,6 +57,8 @@ public class ExpenseService {
                 .date(request.getDate())
                 .receiptUrl(request.getReceiptUrl())
                 .rawOcrData(request.getRawOcrData())
+                .suggestedCategory(request.getSuggestedCategory())
+                .userOverrodeCategory(overrode)
                 .user(user)
                 .build();
 

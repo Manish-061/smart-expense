@@ -1,5 +1,6 @@
 package com.smartexpense.smartexpensebackend.dto.response;
 
+import com.smartexpense.smartexpensebackend.model.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +21,9 @@ public class OcrResultResponse {
     private BigDecimal amount;
     private String merchantName;
     private String date;
+
+    // Phase 4: Suggested category from rule engine
+    private Category suggestedCategory;
 
     // Confidence scores (0.0 to 1.0)
     private double amountConfidence;

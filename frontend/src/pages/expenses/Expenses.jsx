@@ -2,22 +2,28 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import api from "../../lib/api";
+import useAuthStore from "../../store/useAuthStore";
 import { ExpenseForm } from "../../components/expense/ExpenseForm";
 import { Button } from "../../components/ui/Button";
-import { Plus, Filter } from "lucide-react";
+import { CategoryBadge } from "../../components/ui/CategoryBadge";
+import { CategorySelect } from "../../components/ui/CategorySelect";
+import { getCategoryConfig } from "../../lib/categories";
+import { Plus, Filter, Receipt } from "lucide-react";
 
 export default function Expenses() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const userEmail = useAuthStore((state) => state.user?.email);
   const queryClient = useQueryClient();
 
   const { data: expenses, isLoading } = useQuery({
-    queryKey: ['expenses', categoryFilter],
+    queryKey: ['expenses', userEmail, categoryFilter],
     queryFn: async () => {
       const params = categoryFilter ? { category: categoryFilter } : {};
       const response = await api.get('/expenses', { params });
       return response.data;
-    }
+    },
+    enabled: Boolean(userEmail),
   });
 
   const createExpenseMutation = useMutation({
@@ -62,21 +68,15 @@ export default function Expenses() {
         {/* Filters */}
         <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
           <div className="flex items-center text-sm font-medium text-gray-500">
-            <Filter className="w-4 h-4 mr-2" /> Filters:
+            <Filter className="w-4 h-4 mr-2" /> Filter:
           </div>
-          <select 
-            className="text-sm rounded-lg border border-gray-300 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          <CategorySelect
+            showAllOption
+            allLabel="All Categories"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            <option value="FOOD">Food</option>
-            <option value="TRANSPORT">Transport</option>
-            <option value="SHOPPING">Shopping</option>
-            <option value="ENTERTAINMENT">Entertainment</option>
-            <option value="BILLS">Bills</option>
-            {/* Can add rest of categories here */}
-          </select>
+            className="!h-9 max-w-[200px] text-sm"
+          />
         </div>
 
         {/* Table */}
@@ -105,24 +105,31 @@ export default function Expenses() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {expenses?.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-sm text-gray-600 whitespace-nowrap">
-                      {format(new Date(expense.date), "MMM d, yyyy")}
-                    </td>
-                    <td className="p-4 text-sm font-medium text-gray-900">
-                      {expense.description}
-                    </td>
-                    <td className="p-4 text-sm">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-gray-100 text-gray-800 capitalize">
-                        {expense.category.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm font-bold text-gray-900 text-right whitespace-nowrap">
-                      ${expense.amount.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {expenses?.map((expense) => {
+                  const catConfig = getCategoryConfig(expense.category);
+                  const CatIcon = catConfig.icon;
+                  return (
+                    <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 text-sm text-gray-600 whitespace-nowrap">
+                        {format(new Date(expense.date), "MMM d, yyyy")}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg ${catConfig.bg} flex items-center justify-center ${catConfig.color} flex-shrink-0`}>
+                            <CatIcon className="w-4 h-4" />
+                          </div>
+                          <span className="font-medium text-gray-900">{expense.description}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm">
+                        <CategoryBadge category={expense.category} size="sm" />
+                      </td>
+                      <td className="p-4 text-sm font-bold text-gray-900 text-right whitespace-nowrap">
+                        ${expense.amount.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

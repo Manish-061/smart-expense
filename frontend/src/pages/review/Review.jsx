@@ -1,12 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
 import api from "../../lib/api";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { CategorySelect } from "../../components/ui/CategorySelect";
+import { CategoryBadge } from "../../components/ui/CategoryBadge";
+import { getCategoryConfig } from "../../lib/categories";
 
 // Validations for the editable fields
 const reviewSchema = z.object({
@@ -15,6 +18,19 @@ const reviewSchema = z.object({
   date: z.string().min(1, "Date is required"),
   category: z.string().min(1, "Category is required"),
 });
+
+function ConfidenceIndicator({ score }) {
+  const percentage = Math.round(score * 100);
+  let color = "text-red-500";
+  let bg = "bg-red-100";
+  if (percentage >= 70) { color = "text-emerald-600"; bg = "bg-emerald-100"; }
+  else if (percentage >= 40) { color = "text-amber-600"; bg = "bg-amber-100"; }
+  return (
+    <span className={`inline-flex items-center text-xs font-medium ${color} ${bg} px-2 py-0.5 rounded-full`}>
+      {percentage}% confident
+    </span>
+  );
+}
 
 export default function Review() {
   const location = useLocation();
@@ -28,14 +44,16 @@ export default function Review() {
     defaultValues: {
       amount: ocrData?.amount || "",
       description: ocrData?.merchantName || "",
-      date: ocrData?.date || new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-      category: "", // User must select category for Phase 3
+      date: ocrData?.date || new Date().toISOString().split('T')[0],
+      category: ocrData?.suggestedCategory || "",
     },
   });
 
+  const watchedCategory = useWatch({ control, name: "category" });
+  const isOverridden = ocrData?.suggestedCategory && watchedCategory !== ocrData.suggestedCategory;
+
   const saveMutation = useMutation({
     mutationFn: async (formData) => {
-      // Build the ReceiptExpenseRequest payload
       const payload = {
         amount: formData.amount,
         description: formData.description,
@@ -43,12 +61,12 @@ export default function Review() {
         category: formData.category,
         receiptUrl: ocrData.receiptUrl,
         rawOcrData: JSON.stringify(ocrData),
+        suggestedCategory: ocrData.suggestedCategory || null,
       };
       const response = await api.post("/expenses/from-receipt", payload);
       return response.data;
     },
     onSuccess: () => {
-      // Refresh expenses data and redirect
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       navigate("/expenses");
     },
@@ -56,9 +74,12 @@ export default function Review() {
 
   if (!ocrData) {
     return (
-      <div className="max-w-3xl mx-auto text-center py-12">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">No receipt data found</h2>
-        <p className="text-gray-500 mb-6">Please upload a receipt to use this feature.</p>
+      <div className="max-w-3xl mx-auto text-center py-16">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-gray-400" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No receipt data found</h2>
+        <p className="text-gray-500 mb-6">Please upload a receipt image first to review and save it.</p>
         <Button onClick={() => navigate("/upload")}>Go to Upload</Button>
       </div>
     );
@@ -77,11 +98,29 @@ export default function Review() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">Review Receipt</h1>
           <p className="text-gray-600 mt-1">Verify the extracted details and assign a category.</p>
         </div>
       </div>
+
+      {/* AI Suggestion Banner */}
+      {ocrData.suggestedCategory && (
+        <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <div className="p-2 bg-indigo-100 rounded-lg">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-indigo-900">
+              AI detected this as <span className="font-bold">{getCategoryConfig(ocrData.suggestedCategory).label}</span>
+            </p>
+            <p className="text-xs text-indigo-600 mt-0.5">
+              Based on merchant name and receipt content. You can override this below.
+            </p>
+          </div>
+          <CategoryBadge category={ocrData.suggestedCategory} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column: Image Preview */}
@@ -108,16 +147,27 @@ export default function Review() {
           <h3 className="text-lg font-bold text-gray-900 mb-6">Extracted Details</h3>
           
           {saveMutation.isError && (
-            <div className="p-3 mb-6 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100">
+            <div className="p-3 mb-6 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               Failed to save expense. Please try again.
+            </div>
+          )}
+
+          {saveMutation.isSuccess && (
+            <div className="p-3 mb-6 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-100 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              Expense saved successfully! Redirecting...
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount <span className="text-gray-400 font-normal ml-2">(Confidence: {(ocrData.amountConfidence * 100).toFixed(0)}%)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Amount
+                </label>
+                <ConfidenceIndicator score={ocrData.amountConfidence} />
+              </div>
               <Controller
                 name="amount"
                 control={control}
@@ -136,9 +186,12 @@ export default function Review() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Merchant / Description <span className="text-gray-400 font-normal ml-2">(Confidence: {(ocrData.merchantConfidence * 100).toFixed(0)}%)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Merchant / Description
+                </label>
+                <ConfidenceIndicator score={ocrData.merchantConfidence} />
+              </div>
               <Input
                 placeholder="e.g. Starbucks, Walmart"
                 {...register("description")}
@@ -147,9 +200,12 @@ export default function Review() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date <span className="text-gray-400 font-normal ml-2">(Confidence: {(ocrData.dateConfidence * 100).toFixed(0)}%)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Date
+                </label>
+                <ConfidenceIndicator score={ocrData.dateConfidence} />
+              </div>
               <Input
                 type="date"
                 {...register("date")}
@@ -158,26 +214,28 @@ export default function Review() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Category
+                </label>
+                <div className="flex items-center gap-2">
+                  {ocrData.suggestedCategory && !isOverridden && (
+                    <span className="text-xs font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      AI Suggested
+                    </span>
+                  )}
+                  {isOverridden && (
+                    <span className="text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">
+                      Overridden
+                    </span>
+                  )}
+                </div>
+              </div>
+              <CategorySelect
                 {...register("category")}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
-                  errors.category ? "border-red-300" : "border-gray-300"
-                }`}
-              >
-                <option value="">Select a category</option>
-                <option value="FOOD">Food & Dining</option>
-                <option value="TRANSPORT">Transportation</option>
-                <option value="SHOPPING">Shopping</option>
-                <option value="ENTERTAINMENT">Entertainment</option>
-                <option value="BILLS">Bills & Utilities</option>
-                <option value="OTHER">Other</option>
-              </select>
-              {errors.category && (
-                <p className="text-sm text-red-500 mt-1">{errors.category.message}</p>
-              )}
+                error={errors.category?.message}
+              />
             </div>
 
             <div className="pt-4 border-t border-gray-100">
