@@ -92,7 +92,7 @@ export default function Review() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => navigate("/upload")}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
         >
@@ -107,18 +107,11 @@ export default function Review() {
       {/* AI Suggestion Banner */}
       {ocrData.suggestedCategory && (
         <div className="flex items-center gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-          <div className="p-2 bg-indigo-100 rounded-lg">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-          </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-indigo-900">
-              AI detected this as <span className="font-bold">{getCategoryConfig(ocrData.suggestedCategory).label}</span>
-            </p>
             <p className="text-xs text-indigo-600 mt-0.5">
-              Based on merchant name and receipt content. You can override this below.
+              You can override this below. Check for the category.
             </p>
           </div>
-          <CategoryBadge category={ocrData.suggestedCategory} />
         </div>
       )}
 
@@ -126,15 +119,15 @@ export default function Review() {
         {/* Left Column: Image Preview */}
         <div className="bg-gray-50 rounded-2xl border border-gray-200 p-4 flex items-center justify-center min-h-[400px]">
           {ocrData.receiptImageUrl ? (
-            <img 
-              src={ocrData.receiptImageUrl} 
-              alt="Uploaded receipt" 
+            <img
+              src={ocrData.receiptImageUrl}
+              alt="Uploaded receipt"
               className="max-w-full max-h-[600px] object-contain rounded-lg shadow-sm"
             />
           ) : ocrData.receiptUrl ? (
-            <img 
-              src={ocrData.receiptUrl} 
-              alt="Uploaded receipt" 
+            <img
+              src={ocrData.receiptUrl}
+              alt="Uploaded receipt"
               className="max-w-full max-h-[600px] object-contain rounded-lg shadow-sm"
             />
           ) : (
@@ -145,7 +138,7 @@ export default function Review() {
         {/* Right Column: Editable Form */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-6">Extracted Details</h3>
-          
+
           {saveMutation.isError && (
             <div className="p-3 mb-6 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -166,7 +159,6 @@ export default function Review() {
                 <label className="block text-sm font-medium text-gray-700">
                   Amount
                 </label>
-                <ConfidenceIndicator score={ocrData.amountConfidence} />
               </div>
               <Controller
                 name="amount"
@@ -190,7 +182,6 @@ export default function Review() {
                 <label className="block text-sm font-medium text-gray-700">
                   Merchant / Description
                 </label>
-                <ConfidenceIndicator score={ocrData.merchantConfidence} />
               </div>
               <Input
                 placeholder="e.g. Starbucks, Walmart"
@@ -204,7 +195,6 @@ export default function Review() {
                 <label className="block text-sm font-medium text-gray-700">
                   Date
                 </label>
-                <ConfidenceIndicator score={ocrData.dateConfidence} />
               </div>
               <Input
                 type="date"
@@ -218,19 +208,6 @@ export default function Review() {
                 <label className="block text-sm font-medium text-gray-700">
                   Category
                 </label>
-                <div className="flex items-center gap-2">
-                  {ocrData.suggestedCategory && !isOverridden && (
-                    <span className="text-xs font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      AI Suggested
-                    </span>
-                  )}
-                  {isOverridden && (
-                    <span className="text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">
-                      Overridden
-                    </span>
-                  )}
-                </div>
               </div>
               <CategorySelect
                 {...register("category")}

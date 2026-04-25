@@ -5,11 +5,20 @@ import useAuthStore from "../../store/useAuthStore";
 import { Wallet, Receipt, CreditCard } from "lucide-react";
 import { CategoryBadge } from "../../components/ui/CategoryBadge";
 import { getCategoryConfig } from "../../lib/categories";
+import { formatCurrency } from "../../lib/utils";
 
 export default function Dashboard() {
   const today = new Date();
-  const userEmail = useAuthStore((state) => state.user?.email);
-  
+  const user = useAuthStore((state) => state.user);
+  const userEmail = user?.email;
+  const userFullName = user?.fullName;
+  const userName = userFullName || userEmail?.split('@')[0] || 'User';
+
+  const currentHour = today.getHours();
+  let greeting = 'Good evening';
+  if (currentHour < 12) greeting = 'Good morning';
+  else if (currentHour < 18) greeting = 'Good afternoon';
+
   // Fetch monthly summary
   const { data: summary, isLoading: isLoadingSummary } = useQuery({
     queryKey: ['expenses', userEmail, 'summary', today.getFullYear(), today.getMonth() + 1],
@@ -35,7 +44,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Good morning</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {userName}</h1>
         <p className="text-gray-600 mt-1">Here's what's happening with your expenses today.</p>
       </div>
 
@@ -52,7 +61,7 @@ export default function Dashboard() {
           </div>
           <p className="text-sm font-medium text-gray-500">Monthly Spending</p>
           <h2 className="text-3xl font-bold text-gray-900 mt-1">
-            ${isLoadingSummary ? '...' : summary?.totalSpend?.toFixed(2) || '0.00'}
+            {isLoadingSummary ? '...' : formatCurrency(summary?.totalSpend || 0)}
           </h2>
         </div>
 
@@ -119,7 +128,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="font-bold text-gray-900">
-                        ${expense.amount.toFixed(2)}
+                        {formatCurrency(expense.amount)}
                       </div>
                     </li>
                   );
@@ -153,7 +162,7 @@ export default function Dashboard() {
                             <div className={`w-2.5 h-2.5 rounded-full ${catConfig.dot}`}></div>
                             <span className="text-sm font-medium text-gray-700">{catConfig.label}</span>
                           </div>
-                          <span className="text-sm font-bold text-gray-900">${amount.toFixed(2)}</span>
+                          <span className="text-sm font-bold text-gray-900">{formatCurrency(amount)}</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
                           <div 

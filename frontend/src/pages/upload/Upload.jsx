@@ -85,7 +85,7 @@ export default function Upload() {
       {/* Progress State UX */}
       {uploadMutation.isPending && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center animate-pulse">
-          <h3 className="text-primary font-medium text-lg">AI is reading your receipt...</h3>
+          <h3 className="text-primary font-medium text-lg">OCR is processing your receipt...</h3>
           <p className="text-gray-500 text-sm mt-2">
             This usually takes a few seconds depending on the image quality.
           </p>

@@ -8,6 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { CategoryBadge } from "../../components/ui/CategoryBadge";
 import { CategorySelect } from "../../components/ui/CategorySelect";
 import { getCategoryConfig } from "../../lib/categories";
+import { formatCurrency } from "../../lib/utils";
 import { Plus, Filter, Receipt } from "lucide-react";
 
 export default function Expenses() {
@@ -125,7 +126,7 @@ export default function Expenses() {
                         <CategoryBadge category={expense.category} size="sm" />
                       </td>
                       <td className="p-4 text-sm font-bold text-gray-900 text-right whitespace-nowrap">
-                        ${expense.amount.toFixed(2)}
+                        {formatCurrency(expense.amount)}
                       </td>
                     </tr>
                   );
