@@ -14,7 +14,7 @@ const expenseSchema = z.object({
   date: z.string().min(1, "Date is required"),
 });
 
-export function ExpenseForm({ onSubmit, onCancel, isLoading }) {
+export function GroupExpenseForm({ groupId, onSubmit, onCancel, isLoading }) {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
@@ -22,16 +22,24 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading }) {
     }
   });
 
+  const submitWithGroup = (data) => {
+    onSubmit({ ...data, groupId });
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-6 w-full max-w-md mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-900">Add Expense</h3>
+        <h3 className="text-xl font-bold text-gray-900">Add Shared Expense</h3>
         <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="mb-6 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
+        This expense will be split equally among all current group members.
+      </div>
+
+      <form onSubmit={handleSubmit(submitWithGroup)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Amount (₹)
@@ -82,7 +90,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading }) {
             Cancel
           </Button>
           <Button type="submit" className="flex-1" isLoading={isLoading}>
-            Save
+            Add Expense
           </Button>
         </div>
       </form>

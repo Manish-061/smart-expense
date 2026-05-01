@@ -41,6 +41,7 @@ export default function Login() {
 
       // Store user info and token
       setAuth({ 
+        id: response.data.id,
         fullName: response.data.fullName, 
         email: response.data.email 
       }, response.data.token);

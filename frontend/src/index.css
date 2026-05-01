@@ -27,6 +27,20 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+  
+  /* Make all buttons and interactive elements show the hand cursor on hover */
+  button, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+  
+  button:disabled,
+  [role="button"]:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Custom utilities */

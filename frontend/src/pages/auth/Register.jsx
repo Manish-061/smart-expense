@@ -36,6 +36,7 @@ export default function Register() {
       queryClient.clear();
 
       setAuth({ 
+        id: response.data.id,
         fullName: response.data.fullName, 
         email: response.data.email 
       }, response.data.token);

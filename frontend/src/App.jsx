@@ -7,6 +7,10 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Expenses from './pages/expenses/Expenses';
 import Upload from './pages/upload/Upload';
 import Review from './pages/review/Review';
+import Groups from './pages/groups/Groups';
+import GroupDetails from './pages/groups/GroupDetails';
+import Budgets from './pages/budgets/Budgets';
+import Reports from './pages/reports/Reports';
 
 // Create a client with reasonable defaults
 const queryClient = new QueryClient({
@@ -35,7 +39,12 @@ function App() {
             <Route path="/upload" element={<Upload />} />
             <Route path="/review" element={<Review />} />
             
-            <Route path="/reports" element={<div className="p-8">Reports Placeholder (Phase 4+)</div>} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/:id" element={<GroupDetails />} />
+            
+            <Route path="/budgets" element={<Budgets />} />
+            
+            <Route path="/reports" element={<Reports />} />
           </Route>
           
           {/* Default redirect */}

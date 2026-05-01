@@ -1,13 +1,15 @@
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import useAuthStore from "../../store/useAuthStore";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Receipt, Upload, PieChart, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, Receipt, Upload, PieChart, LogOut, Menu, Users, Target } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Expenses', href: '/expenses', icon: Receipt },
+  { name: 'Groups', href: '/groups', icon: Users },
+  { name: 'Budgets', href: '/budgets', icon: Target },
   { name: 'Upload Receipt', href: '/upload', icon: Upload },
   { name: 'Reports', href: '/reports', icon: PieChart },
 ];
