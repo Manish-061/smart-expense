@@ -2,6 +2,7 @@ package com.smartexpense.smartexpensebackend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -61,6 +62,34 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handle forbidden access to protected resources.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+        ApiError apiError = ApiError.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(apiError, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handle invalid business requests.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        ApiError apiError = ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
     /**

@@ -1,11 +1,14 @@
 package com.smartexpense.smartexpensebackend.controller;
 
 import com.smartexpense.smartexpensebackend.dto.request.ExpenseRequest;
+import com.smartexpense.smartexpensebackend.dto.request.GroupExpenseRequest;
 import com.smartexpense.smartexpensebackend.dto.response.ExpenseResponse;
 import com.smartexpense.smartexpensebackend.dto.response.ExpenseSummaryResponse;
+import com.smartexpense.smartexpensebackend.dto.response.GroupExpenseResponse;
 import com.smartexpense.smartexpensebackend.model.Category;
 import com.smartexpense.smartexpensebackend.model.User;
 import com.smartexpense.smartexpensebackend.service.ExpenseService;
+import com.smartexpense.smartexpensebackend.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ import java.util.List;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
+    private final GroupService groupService;
 
     /**
      * Create a new expense.
@@ -33,6 +37,18 @@ public class ExpenseController {
             @AuthenticationPrincipal User user) {
         ExpenseResponse response = expenseService.createExpense(request, user);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    /**
+     * Create a shared group expense using equal splits.
+     * POST /api/expenses/group
+     */
+    @PostMapping("/group")
+    public ResponseEntity<GroupExpenseResponse> createGroupExpense(
+            @Valid @RequestBody GroupExpenseRequest request,
+            @AuthenticationPrincipal User user) {
+        GroupExpenseResponse response = groupService.createGroupExpense(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**

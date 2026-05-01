@@ -52,4 +52,29 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Object[]> getCategoryWiseSummary(@Param("userId") Long userId,
                                          @Param("year") int year,
                                          @Param("month") int month);
+
+    /**
+     * Per-currency totals for a given month.
+     * Returns rows of [currency (String), total (BigDecimal)].
+     */
+    @Query("SELECT COALESCE(e.currency, 'INR'), COALESCE(SUM(e.amount), 0) FROM Expense e " +
+           "WHERE e.user.id = :userId " +
+           "AND YEAR(e.date) = :year " +
+           "AND MONTH(e.date) = :month " +
+           "GROUP BY COALESCE(e.currency, 'INR') " +
+           "ORDER BY SUM(e.amount) DESC")
+    List<Object[]> getCurrencyWiseTotals(@Param("userId") Long userId,
+                                        @Param("year") int year,
+                                        @Param("month") int month);
+
+    /**
+     * Transaction count for a given month.
+     */
+    @Query("SELECT COUNT(e) FROM Expense e " +
+           "WHERE e.user.id = :userId " +
+           "AND YEAR(e.date) = :year " +
+           "AND MONTH(e.date) = :month")
+    long getTransactionCountByMonth(@Param("userId") Long userId,
+                                   @Param("year") int year,
+                                   @Param("month") int month);
 }

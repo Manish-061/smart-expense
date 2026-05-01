@@ -6,17 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExpenseSummaryResponse {
+public class GroupBalanceResponse {
 
-    private int year;
-    private int month;
-    private BigDecimal totalSpend;
-    private long transactionCount;
-    private Map<String, BigDecimal> categoryBreakdown;
+    private Long userId;
+    private String fullName;
+    private String email;
+    private BigDecimal pendingOwedAmount;
 }

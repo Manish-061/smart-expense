@@ -1,6 +1,20 @@
 package com.smartexpense.smartexpensebackend.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,14 +27,16 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "expenses")
-public class Expense {
+@Table(name = "group_expenses")
+public class GroupExpense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,23 +65,17 @@ public class Expense {
     @Column(length = 3)
     private String currency = "INR";
 
-    // Phase 3: Receipt linkage
-    @Column(length = 512)
-    private String receiptUrl;
-
-    @Column(columnDefinition = "TEXT")
-    private String rawOcrData;
-
-    // Phase 4: Categorization tracking
-    @Enumerated(EnumType.STRING)
-    private Category suggestedCategory;
-
-    @Builder.Default
-    private boolean userOverrodeCategory = false;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    private ExpenseGroup group;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "paid_by_user_id", nullable = false)
+    private User paidBy;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "groupExpense", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExpenseSplit> splits = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

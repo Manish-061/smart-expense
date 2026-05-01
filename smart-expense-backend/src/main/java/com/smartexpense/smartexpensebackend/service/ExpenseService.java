@@ -33,6 +33,7 @@ public class ExpenseService {
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .date(request.getDate())
+                .currency("INR")
                 .user(user)
                 .build();
 
@@ -55,6 +56,7 @@ public class ExpenseService {
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .date(request.getDate())
+                .currency("INR")
                 .receiptUrl(request.getReceiptUrl())
                 .rawOcrData(request.getRawOcrData())
                 .suggestedCategory(request.getSuggestedCategory())
@@ -110,11 +112,10 @@ public class ExpenseService {
      */
     public ExpenseSummaryResponse getExpenseSummary(User user, int year, int month) {
         BigDecimal totalSpend = expenseRepository.getTotalSpendByMonth(user.getId(), year, month);
+        long transactionCount = expenseRepository.getTransactionCountByMonth(user.getId(), year, month);
 
-        List<Object[]> categoryResults = expenseRepository.getCategoryWiseSummary(
-                user.getId(), year, month);
-
-        // Build ordered map (highest spend first, preserved from query ORDER BY)
+        // Per-category totals
+        List<Object[]> categoryResults = expenseRepository.getCategoryWiseSummary(user.getId(), year, month);
         Map<String, BigDecimal> categoryBreakdown = new LinkedHashMap<>();
         for (Object[] row : categoryResults) {
             Category cat = (Category) row[0];
@@ -126,6 +127,7 @@ public class ExpenseService {
                 .year(year)
                 .month(month)
                 .totalSpend(totalSpend)
+                .transactionCount(transactionCount)
                 .categoryBreakdown(categoryBreakdown)
                 .build();
     }
