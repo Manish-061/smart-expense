@@ -9,8 +9,7 @@ The SmartExpense backend is a robust API designed to handle personal and group f
 - **Database:** PostgreSQL with Spring Data JPA (Hibernate)
 - **Validation:** Jakarta Validation
 - **Cloud:** AWS S3 (Receipt Storage)
-- **Build Tool:** Maven
-- **Boilerplate Reduction:** Lombok
+- **OCR Engine:** Tesseract OCR (Local CLI integration)
 
 ---
 
@@ -94,7 +93,7 @@ The API strictly follows RESTful conventions returning JSON payloads.
 - **ExpenseService:** Handles personal transaction logging and aggregating data for the Financial Reports dashboard.
 - **GroupService:** Complex logic. Handles creating shared expenses, generating equal/custom splits, and calculating "Who owes Who" balances across the entire group.
 - **BudgetService:** Evaluates running expenses against defined category limits to trigger Warnings/Exceeded statuses.
-- **OcrService:** Uploads receipts to AWS S3, calls Google Gemini Pro Vision to extract Merchant, Amount, Date, and Category from the image, and returns a parsed DTO.
+- **OcrService:** Uploads receipts to AWS S3, calls the local Tesseract OCR CLI via `ProcessBuilder` to extract text from the image, and parses the Merchant, Amount, and Date using Regex logic.
 
 ---
 

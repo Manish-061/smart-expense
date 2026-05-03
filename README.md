@@ -9,7 +9,7 @@
 - **Personal Expense Tracking:** Log and categorize your daily expenses.
 - **Group Settlements (Splitwise-style):** Create groups, add members, log shared expenses, and instantly see who owes whom.
 - **Budget Management:** Set monthly limits per category and receive visual alerts when you exceed them.
-- **AI Receipt Scanning:** Upload images of physical receipts; our AWS S3 + Google Gemini Pro Vision integration automatically extracts the amount, date, merchant, and category.
+- **Receipt Scanning:** Upload images of physical receipts; our backend utilizes Tesseract OCR to automatically extract the amount, date, and merchant.
 - **Financial Analytics:** Interactive, Recharts-powered dashboards detailing your 6-month spending trends and monthly category breakdowns.
 
 ---
@@ -27,7 +27,7 @@
 - **Framework:** Spring Boot 4.x (Java 17+)
 - **Database:** PostgreSQL (Spring Data JPA)
 - **Security:** Spring Security & JWT
-- **Cloud/AI:** AWS S3, Google Gemini Pro Vision
+- **Cloud/OCR:** AWS S3, Tesseract OCR
 
 ---
 
