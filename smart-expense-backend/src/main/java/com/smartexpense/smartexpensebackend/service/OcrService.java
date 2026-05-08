@@ -1,36 +1,37 @@
 package com.smartexpense.smartexpensebackend.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * OCR service that calls the Tesseract CLI directly via ProcessBuilder.
- * This avoids all JNA/native-library crashes (Invalid memory access)
- * that plague Tess4J on Windows.
+ * OCR service using Tess4J (Tesseract Java wrapper) via Spring dependency injection.
  *
- * Requires Tesseract OCR installed on the system.
- * Install on Windows: winget install -e --id UB-Mannheim.TesseractOCR
+ * The Tesseract instance is a singleton bean injected from TesseractConfig.
+ * Access is synchronized because Tess4J's Tesseract class is NOT thread-safe.
+ * This approach avoids:
+ *   - The JNA "Invalid memory access" crash from creating/destroying instances.
+ *   - The requirement to have Tesseract CLI installed on the host system.
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class OcrService {
 
-    @Value("${ocr.tesseract-cmd:tesseract}")
-    private String tesseractCmd;
+    private final Tesseract tesseract;
 
     // ========================
     // Regex patterns for extraction
@@ -38,7 +39,7 @@ public class OcrService {
 
     // Match amounts like $12.50, 12.50, ₹450.00, Rs. 320
     private static final Pattern AMOUNT_PATTERN = Pattern.compile(
-            "(?:[$₹€£]|Rs\\.?\\s?)?(\\d{1,7}[,.]\\d{2})\\b");
+            "(?:[$₹€£]|Rs\\.?\\s?)(\\d{1,7}[,.]\\d{2})\\b");
 
     // Match common date formats
     private static final DateTimeFormatter[] DATE_FORMATTERS = {
@@ -55,73 +56,33 @@ public class OcrService {
 
     /**
      * Perform OCR on an uploaded image file and extract structured data.
-     * Uses the system-installed Tesseract CLI to avoid JNA crashes.
+     * Uses the injected singleton Tesseract instance with synchronized access.
+     *
+     * Uses doOCR(File) instead of doOCR(BufferedImage) to avoid the JNA
+     * "Invalid memory access" crash caused by BufferedImage-to-Pix conversion
+     * on Windows.
      */
     public Map<String, Object> processReceipt(MultipartFile file) throws IOException {
-        // Preserve original extension — Tesseract uses it for image format detection
+        // Preserve original extension — Leptonica uses it for format detection
         String originalFilename = file.getOriginalFilename();
         String extension = ".png";
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
 
-        File tempInput = File.createTempFile("receipt-", extension);
-        File tempOutput = File.createTempFile("ocr-output-", ""); // Tesseract appends .txt
-
+        File tempFile = File.createTempFile("receipt-", extension);
         try {
-            file.transferTo(tempInput);
-
-            // Call Tesseract CLI: tesseract input.png output-base
-            ProcessBuilder pb = new ProcessBuilder(
-                    tesseractCmd,
-                    tempInput.getAbsolutePath(),
-                    tempOutput.getAbsolutePath(), // Tesseract auto-appends .txt
-                    "-l", "eng",
-                    "--psm", "3"  // Fully automatic page segmentation
-            );
-            pb.redirectErrorStream(true);
-
-            Process process = pb.start();
-
-            // Capture stdout/stderr for debugging
-            String processOutput;
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
-                processOutput = sb.toString();
-            }
-
-            boolean finished = process.waitFor(30, TimeUnit.SECONDS);
-            if (!finished) {
-                process.destroyForcibly();
-                throw new IOException("Tesseract OCR timed out after 30 seconds.");
-            }
-
-            int exitCode = process.exitValue();
-            if (exitCode != 0) {
-                log.error("Tesseract exited with code {}: {}", exitCode, processOutput);
-                throw new IOException("Tesseract OCR failed (exit code " + exitCode + "): " + processOutput.trim());
-            }
-
-            // Read the output .txt file
-            File outputTxt = new File(tempOutput.getAbsolutePath() + ".txt");
-            if (!outputTxt.exists()) {
-                throw new IOException("Tesseract did not produce output. Check that Tesseract is installed and on PATH.");
-            }
+            file.transferTo(tempFile);
 
             String rawText;
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(outputTxt), StandardCharsets.UTF_8))) {
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line).append("\n");
+            try {
+                // Synchronized access — Tess4J is not thread-safe
+                synchronized (tesseract) {
+                    rawText = tesseract.doOCR(tempFile).trim();
                 }
-                rawText = sb.toString().trim();
+            } catch (TesseractException e) {
+                log.error("Tess4J OCR failed: {}", e.getMessage(), e);
+                throw new IOException("OCR processing failed: " + e.getMessage(), e);
             }
 
             log.info("OCR raw text: {}", rawText);
@@ -135,15 +96,11 @@ public class OcrService {
             extractMerchant(rawText, result);
 
             return result;
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("OCR processing was interrupted.", e);
         } finally {
-            // Clean up all temp files
-            tempInput.delete();
-            tempOutput.delete();
-            new File(tempOutput.getAbsolutePath() + ".txt").delete();
+            // Always clean up the temp file
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
