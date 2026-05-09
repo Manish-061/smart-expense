@@ -95,11 +95,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Redis (for future caching - Phase 7) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis</artifactId>
-		</dependency>
+
 
 		<!-- AWS S3 SDK v2 -->
 		<dependency>
